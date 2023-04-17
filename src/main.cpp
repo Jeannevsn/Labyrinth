@@ -8,7 +8,7 @@
 #endif
 #include "bouton.h"
 
-#define PIN 26
+#define PIN 26 // pin matrix initialization
 
 // Color definitions
 #define BLACK 0x0000
@@ -20,24 +20,26 @@
 #define YELLOW 0xFFE0
 #define WHITE 0xFFFF
 
-Bouton bt[4];
-Adafruit_NeoMatrix matrix = Adafruit_NeoMatrix(8, 8, PIN);
+Bouton bt[4];                                              // buttons initialization
+Adafruit_NeoMatrix matrix = Adafruit_NeoMatrix(8, 8, PIN); // matrix initialization
+uint16_t grey = matrix.Color(40, 40, 40);                  // initialization of a "new" color
+// initialization game settings
 int position[2];
 int start[2];
 int finish[2];
 int references[2][2];
-int i = 0, j = 0, x, y, x_finish, y_finish, x_start, y_start;
-int color_table[8] = {BLACK, BLUE, RED, GREEN, CYAN, MAGENTA, YELLOW, WHITE};
-int game_color_table[4] = {BLUE, RED, GREEN, BLACK};
-void setup_bt(int nb_bt);                                            // initialization of the buttons
-void read_bt(int nb_bt);                                             // reading of the buttons
-const int bt_blue = 4, bt_yellow = 17, bt_black = 16, bt_green = 13; // buttons initiation
-int button_table[4] = {bt_yellow, bt_blue, bt_black, bt_green};      // set buttons table
+int i = 0, j = 0, x, y, x_finish, y_finish, x_start, y_start;                 // initialization game variables
+int color_table[8] = {BLACK, BLUE, RED, GREEN, CYAN, MAGENTA, YELLOW, WHITE}; // initialization color table
+void setup_bt(int nb_bt);                                                     // initialization of the buttons
+void read_bt(int nb_bt);                                                      // reading of the buttons
+const int bt_blue = 4, bt_yellow = 17, bt_black = 16, bt_green = 13;          // buttons initiation
+int button_table[4] = {bt_yellow, bt_blue, bt_black, bt_green};               // set buttons table
 
 void setup()
 {
+  // matrix initialization
+  matrix.clear();
   matrix.begin();
-  matrix.setBrightness(20);
   // pins initiation
   pinMode(bt_yellow, INPUT);
   pinMode(bt_green, INPUT);
@@ -49,8 +51,19 @@ void setup()
   pinMode(15, OUTPUT);
   pinMode(14, OUTPUT);
 
+  // fill the matrix full white
   setup_bt(4);
+  for (i = 0; i <= 7; i++)
+  {
+    for (j = 0; j <= 7; j++)
+    {
+      matrix.drawPixel(i, j, grey);
+    }
+  }
 
+  matrix.setBrightness(150); // set the next LEDs in the matrix to 150 brightness
+
+  // define the random parameters of the game
   do
   {
     x_finish = random(0, 7);
@@ -61,6 +74,7 @@ void setup()
     y_start = y;
   } while (x_start == x_finish && y_start == y_finish);
 
+  // set the color of the leds to initialise the game settings
   matrix.drawPixel(x_start, y_start, BLUE);
   matrix.drawPixel(x_finish, y_finish, RED);
   matrix.drawPixel(x, y, color_table[random(1, 7)]);
@@ -68,6 +82,7 @@ void setup()
 
 void loop()
 {
+  // makes coloured ribbons
   /*for (i = 0; i <= 7; i++)
   {
     for (j = 0; j <= 7; j++)
@@ -79,30 +94,32 @@ void loop()
     }
   }*/
 
-  read_bt(4);
+  read_bt(4); // the function is aptly named
 
+  // conditions for changing the led position
   if (bt[0].click() == HIGH)
   {
-    matrix.drawPixel(x, y, BLACK);
+    matrix.drawPixel(x, y, WHITE);
     x--;
   }
   else if (bt[1].click() == HIGH)
   {
-    matrix.drawPixel(x, y, BLACK);
+    matrix.drawPixel(x, y, WHITE);
     x++;
   }
   else if (bt[2].click() == HIGH)
   {
-    matrix.drawPixel(x, y, BLACK);
+    matrix.drawPixel(x, y, WHITE);
     y--;
   }
   else if (bt[3].click() == HIGH)
   {
-    matrix.drawPixel(x, y, BLACK);
+    matrix.drawPixel(x, y, WHITE);
     y++;
   }
 
-  if (x == x_start  && y == y_start)
+  // conditions for some colors
+  if (x == x_start && y == y_start)
   {
     matrix.drawPixel(x, y, BLUE);
   }
@@ -111,8 +128,10 @@ void loop()
     matrix.drawPixel(x, y, GREEN);
   }
 
+  // victory condition
   if (x == x_finish && y == y_finish)
   {
+    matrix.drawPixel(x_start, y_start, WHITE);
     for (i = 0; i <= 7; i++)
     {
       for (j = 0; j <= 7; j++)
@@ -121,7 +140,9 @@ void loop()
       }
     }
   }
-matrix.drawPixel(x_start, y_start, BLUE);
+
+  // conditions for not leaving the matrix
+  matrix.drawPixel(x_start, y_start, BLUE);
   if (x >= 7)
     x = 7;
   if (y >= 7)
@@ -130,8 +151,8 @@ matrix.drawPixel(x_start, y_start, BLUE);
     x = 0;
   if (y <= 0)
     y = 0;
-  
-   matrix.show();
+
+  matrix.show(); // the function is aptly named
 }
 
 void setup_bt(int nb_bt)
