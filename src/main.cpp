@@ -34,6 +34,7 @@ void setup_bt(int nb_bt);                                                     //
 void read_bt(int nb_bt);                                                      // reading of the buttons
 const int bt_blue = 4, bt_yellow = 17, bt_black = 16, bt_green = 13;          // buttons initiation
 int button_table[4] = {bt_yellow, bt_blue, bt_black, bt_green};               // set buttons table
+int game_state;
 
 void setup()
 {
@@ -73,11 +74,6 @@ void setup()
     x_start = x;
     y_start = y;
   } while (x_start == x_finish && y_start == y_finish);
-
-  // set the color of the leds to initialise the game settings
-  matrix.drawPixel(x_start, y_start, BLUE);
-  matrix.drawPixel(x_finish, y_finish, RED);
-  matrix.drawPixel(x, y, color_table[random(1, 7)]);
 }
 
 void loop()
@@ -95,42 +91,90 @@ void loop()
   }*/
 
   read_bt(4); // the function is aptly named
+  switch (game_state)
+  {
+  case 0: // game initialization
+    matrix.drawPixel(x_start, y_start, BLUE);
+    matrix.drawPixel(x_finish, y_finish, RED);
+    matrix.drawPixel(x, y, color_table[random(1, 7)]);
+    
+    // conditions for changing the led position
+    if (bt[0].click() == HIGH)
+    {
+      matrix.drawPixel(x, y, WHITE);
+      x--;
+      game_state = 1;
+    }
+    else if (bt[1].click() == HIGH)
+    {
+      matrix.drawPixel(x, y, WHITE);
+      x++;
+      game_state = 1;
+    }
+    else if (bt[2].click() == HIGH)
+    {
+      matrix.drawPixel(x, y, WHITE);
+      y--;
+      game_state = 1;
+    }
+    else if (bt[3].click() == HIGH)
+    {
+      matrix.drawPixel(x, y, WHITE);
+      y++;
+      game_state = 1;
+    }
 
-  // conditions for changing the led position
-  if (bt[0].click() == HIGH)
-  {
-    matrix.drawPixel(x, y, WHITE);
-    x--;
-  }
-  else if (bt[1].click() == HIGH)
-  {
-    matrix.drawPixel(x, y, WHITE);
-    x++;
-  }
-  else if (bt[2].click() == HIGH)
-  {
-    matrix.drawPixel(x, y, WHITE);
-    y--;
-  }
-  else if (bt[3].click() == HIGH)
-  {
-    matrix.drawPixel(x, y, WHITE);
-    y++;
-  }
+  case 1:
+    // conditions for changing the led position
+    if (bt[0].click() == HIGH)
+    {
+      matrix.drawPixel(x, y, WHITE);
+      x--;
+    }
+    else if (bt[1].click() == HIGH)
+    {
+      matrix.drawPixel(x, y, WHITE);
+      x++;
+    }
+    else if (bt[2].click() == HIGH)
+    {
+      matrix.drawPixel(x, y, WHITE);
+      y--;
+    }
+    else if (bt[3].click() == HIGH)
+    {
+      matrix.drawPixel(x, y, WHITE);
+      y++;
+    }
 
-  // conditions for some colors
-  if (x == x_start && y == y_start)
-  {
-    matrix.drawPixel(x, y, BLUE);
-  }
-  else
-  {
-    matrix.drawPixel(x, y, GREEN);
-  }
+    // conditions for not leaving the matrix
+    matrix.drawPixel(x_start, y_start, BLUE);
+    if (x >= 7)
+      x = 7;
+    if (y >= 7)
+      y = 7;
+    if (x <= 0)
+      x = 0;
+    if (y <= 0)
+      y = 0;
 
-  // victory condition
-  if (x == x_finish && y == y_finish)
-  {
+    // conditions for some colors
+    if (x == x_start && y == y_start)
+    {
+      matrix.drawPixel(x, y, BLUE);
+    }
+    else
+    {
+      matrix.drawPixel(x, y, GREEN);
+    }
+
+    // victory condition
+    if (x == x_finish && y == y_finish)
+    {
+      game_state = 2;
+    }
+
+  case 2:
     matrix.drawPixel(x_start, y_start, WHITE);
     for (i = 0; i <= 7; i++)
     {
@@ -140,18 +184,6 @@ void loop()
       }
     }
   }
-
-  // conditions for not leaving the matrix
-  matrix.drawPixel(x_start, y_start, BLUE);
-  if (x >= 7)
-    x = 7;
-  if (y >= 7)
-    y = 7;
-  if (x <= 0)
-    x = 0;
-  if (y <= 0)
-    y = 0;
-
   matrix.show(); // the function is aptly named
 }
 
