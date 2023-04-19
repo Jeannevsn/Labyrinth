@@ -7,6 +7,7 @@
 #define PSTR // Make Arduino Due happy
 #endif
 #include "bouton.h"
+#include "maze.h"
 
 #define PIN 26 // pin matrix initialization
 
@@ -23,21 +24,20 @@
 Bouton bt[4];                                              // buttons initialization
 Adafruit_NeoMatrix matrix = Adafruit_NeoMatrix(8, 8, PIN); // matrix initialization
 uint16_t grey = matrix.Color(40, 40, 40);                  // initialization of a "new" color
+
 // initialization game settings
-int position[2];
-int start[2];
-int finish[2];
-int references[2][2];
 int i = 0, j = 0, x, y, x_finish, y_finish, x_start, y_start;                 // initialization game variables
 int color_table[8] = {BLACK, BLUE, RED, GREEN, CYAN, MAGENTA, YELLOW, WHITE}; // initialization color table
 void setup_bt(int nb_bt);                                                     // initialization of the buttons
 void read_bt(int nb_bt);                                                      // reading of the buttons
 const int bt_blue = 4, bt_yellow = 17, bt_black = 16, bt_green = 13;          // buttons initiation
-int button_table[4] = {bt_yellow, bt_blue, bt_black, bt_green};               // set buttons table
-int game_state;
+int button_table[4] = {bt_blue, bt_yellow, bt_green, bt_black};               // set buttons table
+int game_state = 0;
+int number_errors = 0;
 
 void setup()
 {
+  Serial.begin(9600);
   // matrix initialization
   matrix.clear();
   matrix.begin();
@@ -69,8 +69,8 @@ void setup()
   {
     x_finish = random(0, 7);
     y_finish = random(0, 7);
-    x = random(0, 7);
-    y = random(0, 7);
+    x = 0; // random(0, 7);
+    y = 0; // random(0, 7);
     x_start = x;
     y_start = y;
   } while (x_start == x_finish && y_start == y_finish);
@@ -97,66 +97,72 @@ void loop()
     matrix.drawPixel(x_start, y_start, BLUE);
     matrix.drawPixel(x_finish, y_finish, RED);
     matrix.drawPixel(x, y, color_table[random(1, 7)]);
-    
-    // conditions for changing the led position
-    if (bt[0].click() == HIGH)
-    {
-      matrix.drawPixel(x, y, WHITE);
-      x--;
-      game_state = 1;
-    }
-    else if (bt[1].click() == HIGH)
-    {
-      matrix.drawPixel(x, y, WHITE);
-      x++;
-      game_state = 1;
-    }
-    else if (bt[2].click() == HIGH)
-    {
-      matrix.drawPixel(x, y, WHITE);
-      y--;
-      game_state = 1;
-    }
-    else if (bt[3].click() == HIGH)
-    {
-      matrix.drawPixel(x, y, WHITE);
-      y++;
-      game_state = 1;
-    }
+    game_state = 1;
+    break;
 
   case 1:
     // conditions for changing the led position
+    Serial.printf("\r (%d,%d)  (%d, %d, %d, %d)", x, y, left_path_check(x, y), top_path_check(x, y), bottom_path_check(x, y), right_path_check(x, y));
     if (bt[0].click() == HIGH)
     {
-      matrix.drawPixel(x, y, WHITE);
-      x--;
+      {
+        if (left_path_check(x, y))
+        {
+          matrix.drawPixel(x, y, grey);
+          x--;
+        }
+        else
+        {
+          game_state = 4;
+        }
+      }
+      game_state = 1;
     }
     else if (bt[1].click() == HIGH)
     {
-      matrix.drawPixel(x, y, WHITE);
-      x++;
+      {
+        if (right_path_check(x, y))
+        {
+          matrix.drawPixel(x, y, grey);
+          x++;
+        }
+        else
+        {
+          game_state = 4;
+        }
+      }
+      game_state = 1;
     }
     else if (bt[2].click() == HIGH)
     {
-      matrix.drawPixel(x, y, WHITE);
-      y--;
+      {
+        if (bottom_path_check(x, y))
+        {
+          matrix.drawPixel(x, y, grey);
+          y++;
+        }
+        else
+        {
+          game_state = 4;
+        }
+      }
+      game_state = 1;
     }
     else if (bt[3].click() == HIGH)
     {
-      matrix.drawPixel(x, y, WHITE);
-      y++;
+      {
+        if (top_path_check(x, y))
+        {
+          matrix.drawPixel(x, y, grey);
+          y--;
+        }
+        else
+        {
+          game_state = 4;
+        }
+      }
+      game_state = 1;
     }
-
-    // conditions for not leaving the matrix
-    matrix.drawPixel(x_start, y_start, BLUE);
-    if (x >= 7)
-      x = 7;
-    if (y >= 7)
-      y = 7;
-    if (x <= 0)
-      x = 0;
-    if (y <= 0)
-      y = 0;
 
     // conditions for some colors
     if (x == x_start && y == y_start)
@@ -173,9 +179,9 @@ void loop()
     {
       game_state = 2;
     }
+    break;
 
   case 2:
-    matrix.drawPixel(x_start, y_start, WHITE);
     for (i = 0; i <= 7; i++)
     {
       for (j = 0; j <= 7; j++)
@@ -183,6 +189,36 @@ void loop()
         matrix.drawPixel(i, j, WHITE);
       }
     }
+    break;
+
+  case 3:
+    for (i = 0; i <= 7; i++)
+    {
+      for (j = 0; j <= 7; j++)
+      {
+        matrix.drawPixel(i, j, RED);
+      }
+    }
+    delay(200);
+    matrix.clear();
+    delay(200);
+    break;
+
+  case 4:
+    number_errors++;
+
+    if (number_errors <= 2)
+      game_state = 1;
+
+    else if (number_errors >= 3)
+    {
+      game_state = 3;
+      // add random maze function and choose a new one
+    }
+    break;
+
+  default:
+    game_state = 0;
   }
   matrix.show(); // the function is aptly named
 }
