@@ -26,14 +26,16 @@ Adafruit_NeoMatrix matrix = Adafruit_NeoMatrix(8, 8, PIN); // matrix initializat
 uint16_t grey = matrix.Color(40, 40, 40);                  // initialization of a "new" color
 
 // initialization game settings
-int i = 0, j = 0, x, y, x_finish, y_finish, x_start, y_start;                 // initialization game variables
-int color_table[8] = {BLACK, BLUE, RED, GREEN, CYAN, MAGENTA, YELLOW, WHITE}; // initialization color table
-void setup_bt(int nb_bt);                                                     // initialization of the buttons
-void read_bt(int nb_bt);                                                      // reading of the buttons
-const int bt_blue = 4, bt_yellow = 17, bt_black = 16, bt_green = 13;          // buttons initiation
-int button_table[4] = {bt_blue, bt_yellow, bt_green, bt_black};               // set buttons table
+int i = 0, j = 0, x, y, x_finish, y_finish, x_start, y_start, game_maze[8][8][2]; // initialization game variables
+int color_table[8] = {BLACK, BLUE, RED, GREEN, CYAN, MAGENTA, YELLOW, WHITE};     // initialization color table
+void setup_bt(int nb_bt);                                                         // initialization of the buttons
+void read_bt(int nb_bt);                                                          // reading of the buttons
+const int bt_blue = 4, bt_yellow = 17, bt_black = 16, bt_green = 13;              // buttons initiation
+int button_table[4] = {bt_blue, bt_yellow, bt_green, bt_black};                   // set buttons table
 int game_state = 0;
 int number_errors = 0;
+
+Maze maze_game;
 
 void setup()
 {
@@ -62,6 +64,7 @@ void setup()
     }
   }
 
+  // random_maze_table[game_maze]
   matrix.setBrightness(150); // set the next LEDs in the matrix to 150 brightness
 
   // define the random parameters of the game
@@ -102,11 +105,11 @@ void loop()
 
   case 1:
     // conditions for changing the led position
-    Serial.printf("\r (%d,%d)  (%d, %d, %d, %d)", x, y, left_path_check(x, y), top_path_check(x, y), bottom_path_check(x, y), right_path_check(x, y));
+    Serial.printf("\r (%d,%d)  (%d, %d, %d, %d)", x, y, maze_game.left_path_check(x, y, game_maze[8][8][2]), maze_game.top_path_check(x, y, game_maze[8][8][2]), maze_game.bottom_path_check(x, y, game_maze[8][8][2]), maze_game.right_path_check(x, y, game_maze[8][8][2]));
     if (bt[0].click() == HIGH)
     {
       {
-        if (left_path_check(x, y))
+        if (maze_game.left_path_check(x, y, game_maze[8][8][2]))
         {
           matrix.drawPixel(x, y, grey);
           x--;
@@ -121,7 +124,7 @@ void loop()
     else if (bt[1].click() == HIGH)
     {
       {
-        if (right_path_check(x, y))
+        if (maze_game.right_path_check(x, y, game_maze[8][8][2]))
         {
           matrix.drawPixel(x, y, grey);
           x++;
@@ -136,7 +139,7 @@ void loop()
     else if (bt[2].click() == HIGH)
     {
       {
-        if (bottom_path_check(x, y))
+        if (maze_game.bottom_path_check(x, y, game_maze[8][8][2]))
         {
           matrix.drawPixel(x, y, grey);
           y++;
@@ -151,7 +154,7 @@ void loop()
     else if (bt[3].click() == HIGH)
     {
       {
-        if (top_path_check(x, y))
+        if (maze_game.top_path_check(x, y, game_maze[8][8][2]))
         {
           matrix.drawPixel(x, y, grey);
           y--;
@@ -213,7 +216,7 @@ void loop()
     else if (number_errors >= 3)
     {
       game_state = 3;
-      // add random maze function and choose a new one
+      maze_game.random_maze();
     }
     break;
 
