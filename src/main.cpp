@@ -27,12 +27,12 @@ uint16_t grey = matrix.Color(40, 40, 40);                  // initialization of 
 
 // initialization game settings
 int i = 0, j = 0, x, y, x_finish, y_finish, x_start, y_start;
-int game_maze[8][8][2]; // initialization game variables
-int color_table[8] = {BLACK, BLUE, RED, GREEN, CYAN, MAGENTA, YELLOW, WHITE};     // initialization color table
-void setup_bt(int nb_bt);                                                         // initialization of the buttons
-void read_bt(int nb_bt);                                                          // reading of the buttons
-const int bt_blue = 4, bt_yellow = 17, bt_black = 16, bt_green = 13;              // buttons initiation
-int button_table[4] = {bt_blue, bt_yellow, bt_green, bt_black};                   // set buttons table
+int game_maze[8][8][2];                                                       // initialization game variables
+int color_table[8] = {BLACK, BLUE, RED, GREEN, CYAN, MAGENTA, YELLOW, WHITE}; // initialization color table
+void setup_bt(int nb_bt);                                                     // initialization of the buttons
+void read_bt(int nb_bt);                                                      // reading of the buttons
+const int bt_blue = 4, bt_yellow = 17, bt_black = 16, bt_green = 13;          // buttons initiation
+int button_table[4] = {bt_blue, bt_yellow, bt_green, bt_black};               // set buttons table
 int game_state = 0;
 int number_errors = 0;
 
@@ -64,11 +64,11 @@ void setup()
       matrix.drawPixel(i, j, grey);
     }
   }
-
+  maze_game.get_start_position(x, y);
+  maze_game.get_finish_position(x_finish, y_finish);
   // random_maze_table[game_maze]
   matrix.setBrightness(150); // set the next LEDs in the matrix to 150 brightness
-
-  // define the random parameters of the game
+  maze_game.print_state();
 }
 
 void loop()
@@ -89,9 +89,8 @@ void loop()
   switch (game_state)
   {
   case 0: // game initialization
-    matrix.drawPixel(x_start, y_start, BLUE);
+    matrix.drawPixel(x, y, BLUE);
     matrix.drawPixel(x_finish, y_finish, RED);
-    matrix.drawPixel(x, y, color_table[random(1, 7)]);
     game_state = 1;
     break;
 
@@ -159,18 +158,8 @@ void loop()
       game_state = 1;
     }
 
-    // conditions for some colors
-    if (x == x_start && y == y_start)
-    {
-      matrix.drawPixel(x, y, BLUE);
-    }
-    else
-    {
-      matrix.drawPixel(x, y, GREEN);
-    }
-
     // victory condition
-    if (maze_game.is_finished(x,y))
+    if (maze_game.is_finished(x, y))
     {
       game_state = 2;
     }
@@ -201,9 +190,14 @@ void loop()
 
   case 4:
     maze_game.randomize_maze();
+    break;
 
   default:
     game_state = 0;
+  }
+  if (game_state != 2 || game_state != 3)
+  {
+    matrix.drawPixel(x, y, BLUE);
   }
   matrix.show(); // the function is aptly named
 }

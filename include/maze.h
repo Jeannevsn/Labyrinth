@@ -20,10 +20,9 @@ public:
 
     bool is_finished(int x, int y) const;
     void get_start_position(int &x, int &y);
+    void get_finish_position(int &x, int &y);
 
 private:
-    
-
     int m_maze[9][8][8][2];
     int m_index_maze;
     int m_finish[2];

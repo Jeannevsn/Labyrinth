@@ -54,12 +54,12 @@ bool Maze::top_path_check(int x, int y) const
 
 void Maze::print_state(void) const
 {
-    printf("Numero maze : ", m_index_maze);
+    Serial.printf("Numero maze : %d \n", m_index_maze);
+
 }
 
-Maze::Maze()
-{
-    int m_maze[9][8][8][2] = {
+Maze::Maze():
+    m_maze {
         {// Row 0
          {{0, 0}, {0, 0}, {1, 0}, {0, 1}, {0, 0}, {1, 0}, {0, 1}, {0, 0}},
          // Row 1
@@ -211,8 +211,9 @@ Maze::Maze()
          // Row 6
          {{0, 0}, {0, 1}, {0, 1}, {0, 1}, {1, 0}, {1, 0}, {0, 1}, {1, 0}},
          // Row 7
-         {{0, 0}, {0, 0}, {0, 0}, {0, 0}, {1, 0}, {0, 0}, {0, 0}, {0, 0}}}};
-
+         {{0, 0}, {0, 0}, {0, 0}, {0, 0}, {1, 0}, {0, 0}, {0, 0}, {0, 0}}}}
+         
+         {
     randomize_maze();
 }
 
@@ -233,4 +234,15 @@ bool Maze::is_finished(int x, int y) const
         return true;
     else
         return false;
+}
+
+void Maze::get_start_position(int &x, int &y)
+{
+    x = m_start[0];
+    y = m_start[1];
+}
+void Maze::get_finish_position(int &x, int &y)
+{
+    x = m_finish[0];
+    y = m_finish[1];
 }
