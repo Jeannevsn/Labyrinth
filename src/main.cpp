@@ -26,7 +26,8 @@ Adafruit_NeoMatrix matrix = Adafruit_NeoMatrix(8, 8, PIN); // matrix initializat
 uint16_t grey = matrix.Color(40, 40, 40);                  // initialization of a "new" color
 
 // initialization game settings
-int i = 0, j = 0, x, y, x_finish, y_finish, x_start, y_start, game_maze[8][8][2]; // initialization game variables
+int i = 0, j = 0, x, y, x_finish, y_finish, x_start, y_start;
+int game_maze[8][8][2]; // initialization game variables
 int color_table[8] = {BLACK, BLUE, RED, GREEN, CYAN, MAGENTA, YELLOW, WHITE};     // initialization color table
 void setup_bt(int nb_bt);                                                         // initialization of the buttons
 void read_bt(int nb_bt);                                                          // reading of the buttons
@@ -68,15 +69,6 @@ void setup()
   matrix.setBrightness(150); // set the next LEDs in the matrix to 150 brightness
 
   // define the random parameters of the game
-  do
-  {
-    x_finish = random(0, 7);
-    y_finish = random(0, 7);
-    x = 0; // random(0, 7);
-    y = 0; // random(0, 7);
-    x_start = x;
-    y_start = y;
-  } while (x_start == x_finish && y_start == y_finish);
 }
 
 void loop()
@@ -105,11 +97,11 @@ void loop()
 
   case 1:
     // conditions for changing the led position
-    Serial.printf("\r (%d,%d)  (%d, %d, %d, %d)", x, y, maze_game.left_path_check(x, y, game_maze[8][8][2]), maze_game.top_path_check(x, y, game_maze[8][8][2]), maze_game.bottom_path_check(x, y, game_maze[8][8][2]), maze_game.right_path_check(x, y, game_maze[8][8][2]));
+    Serial.printf("\r (%d,%d)  (%d, %d, %d, %d)", x, y, maze_game.left_path_check(x, y), maze_game.top_path_check(x, y), maze_game.bottom_path_check(x, y), maze_game.right_path_check(x, y));
     if (bt[0].click() == HIGH)
     {
       {
-        if (maze_game.left_path_check(x, y, game_maze[8][8][2]))
+        if (maze_game.left_path_check(x, y))
         {
           matrix.drawPixel(x, y, grey);
           x--;
@@ -124,7 +116,7 @@ void loop()
     else if (bt[1].click() == HIGH)
     {
       {
-        if (maze_game.right_path_check(x, y, game_maze[8][8][2]))
+        if (maze_game.right_path_check(x, y))
         {
           matrix.drawPixel(x, y, grey);
           x++;
@@ -139,7 +131,7 @@ void loop()
     else if (bt[2].click() == HIGH)
     {
       {
-        if (maze_game.bottom_path_check(x, y, game_maze[8][8][2]))
+        if (maze_game.bottom_path_check(x, y))
         {
           matrix.drawPixel(x, y, grey);
           y++;
@@ -154,7 +146,7 @@ void loop()
     else if (bt[3].click() == HIGH)
     {
       {
-        if (maze_game.top_path_check(x, y, game_maze[8][8][2]))
+        if (maze_game.top_path_check(x, y))
         {
           matrix.drawPixel(x, y, grey);
           y--;
@@ -178,7 +170,7 @@ void loop()
     }
 
     // victory condition
-    if (x == x_finish && y == y_finish)
+    if (maze_game.is_finished(x,y))
     {
       game_state = 2;
     }
@@ -208,17 +200,7 @@ void loop()
     break;
 
   case 4:
-    number_errors++;
-
-    if (number_errors <= 2)
-      game_state = 1;
-
-    else if (number_errors >= 3)
-    {
-      game_state = 3;
-      maze_game.random_maze();
-    }
-    break;
+    maze_game.randomize_maze();
 
   default:
     game_state = 0;
