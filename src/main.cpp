@@ -26,7 +26,7 @@ Adafruit_NeoMatrix matrix = Adafruit_NeoMatrix(8, 8, PIN); // matrix initializat
 uint16_t grey = matrix.Color(40, 40, 40);                  // initialization of a "new" color
 
 // initialization game settings
-int i = 0, j = 0, x, y, x_finish, y_finish, x_start, y_start;
+int i = 0, j = 0, x, y, x_finish, y_finish, x_start, y_start, counter = 0,x_1,y_1,x_2,y_2;
 int game_maze[8][8][2];                                                       // initialization game variables
 int color_table[8] = {BLACK, BLUE, RED, GREEN, CYAN, MAGENTA, YELLOW, WHITE}; // initialization color table
 void setup_bt(int nb_bt);                                                     // initialization of the buttons
@@ -44,6 +44,7 @@ void setup()
   // matrix initialization
   matrix.clear();
   matrix.begin();
+  matrix.setTextWrap(false);
   // pins initiation
   pinMode(bt_yellow, INPUT);
   pinMode(bt_green, INPUT);
@@ -66,9 +67,9 @@ void setup()
   }
   maze_game.get_start_position(x, y);
   maze_game.get_finish_position(x_finish, y_finish);
+  maze_game.get_landmark_position(x_1, y_1, x_2, y_2);
   // random_maze_table[game_maze]
   matrix.setBrightness(150); // set the next LEDs in the matrix to 150 brightness
-  maze_game.print_state();
 }
 
 void loop()
@@ -86,17 +87,23 @@ void loop()
   }*/
 
   read_bt(4); // the function is aptly named
+
+  matrix.drawPixel(x_1,y_1,MAGENTA);
+  matrix.drawPixel(x_2,y_2,MAGENTA);
+  
   switch (game_state)
   {
   case 0: // game initialization
     matrix.drawPixel(x, y, BLUE);
     matrix.drawPixel(x_finish, y_finish, RED);
+    
     game_state = 1;
     break;
 
   case 1:
     // conditions for changing the led position
     Serial.printf("\r (%d,%d)  (%d, %d, %d, %d)", x, y, maze_game.left_path_check(x, y), maze_game.top_path_check(x, y), maze_game.bottom_path_check(x, y), maze_game.right_path_check(x, y));
+    maze_game.print_state();
     if (bt[0].click() == HIGH)
     {
       {
@@ -107,10 +114,12 @@ void loop()
         }
         else
         {
-          game_state = 4;
+          if (number_errors < 2)
+            game_state = 4;
+          else if (number_errors > 2)
+            game_state = 3;
         }
       }
-      game_state = 1;
     }
     else if (bt[1].click() == HIGH)
     {
@@ -122,10 +131,12 @@ void loop()
         }
         else
         {
-          game_state = 4;
+          if (number_errors < 2)
+            game_state = 4;
+          else if (number_errors > 2)
+            game_state = 3;
         }
       }
-      game_state = 1;
     }
     else if (bt[2].click() == HIGH)
     {
@@ -137,10 +148,12 @@ void loop()
         }
         else
         {
-          game_state = 4;
+          if (number_errors < 2)
+            game_state = 4;
+          else if (number_errors > 2)
+            game_state = 3;
         }
       }
-      game_state = 1;
     }
     else if (bt[3].click() == HIGH)
     {
@@ -152,10 +165,12 @@ void loop()
         }
         else
         {
-          game_state = 4;
+          if (number_errors < 2)
+            game_state = 4;
+          else if (number_errors > 2)
+            game_state = 3;
         }
       }
-      game_state = 1;
     }
 
     // victory condition
@@ -163,19 +178,21 @@ void loop()
     {
       game_state = 2;
     }
+    matrix.show(); // the function is aptly named
     break;
 
-  case 2:
+  case 2: // win
     for (i = 0; i <= 7; i++)
     {
       for (j = 0; j <= 7; j++)
       {
-        matrix.drawPixel(i, j, WHITE);
+        matrix.drawPixel(i, j, GREEN);
       }
     }
+        matrix.show();
     break;
 
-  case 3:
+  case 3: // lost with 3 errors
     for (i = 0; i <= 7; i++)
     {
       for (j = 0; j <= 7; j++)
@@ -183,13 +200,32 @@ void loop()
         matrix.drawPixel(i, j, RED);
       }
     }
-    delay(200);
-    matrix.clear();
-    delay(200);
+    matrix.show();
     break;
 
-  case 4:
+  case 4: // lost with one errors
+    number_errors++;
+    for (i = 0; i <= 7; i++)
+    {
+      for (j = 0; j <= 7; j++)
+      {
+        matrix.drawPixel(i, j, WHITE);
+      }
+    }
+    matrix.show();
+    delay(1000);
     maze_game.randomize_maze();
+    maze_game.get_start_position(x,y);
+    maze_game.get_finish_position(x_finish,y_finish);
+    maze_game.get_landmark_position(x_1, y_1, x_2, y_2);
+    game_state = 0;
+    for (i = 0; i <= 7; i++)
+    {
+      for (j = 0; j <= 7; j++)
+      {
+        matrix.drawPixel(i, j, grey);
+      }
+    }
     break;
 
   default:
@@ -199,7 +235,6 @@ void loop()
   {
     matrix.drawPixel(x, y, BLUE);
   }
-  matrix.show(); // the function is aptly named
 }
 
 void setup_bt(int nb_bt)
