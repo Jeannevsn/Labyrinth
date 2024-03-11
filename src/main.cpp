@@ -3,6 +3,8 @@
 #include <Adafruit_GFX.h>
 #include <Adafruit_NeoMatrix.h>
 #include <Adafruit_NeoPixel.h>
+#include <esp_now.h>
+#include <WiFi.h>
 #ifndef PSTR
 #define PSTR // Make Arduino Due happy
 #endif
@@ -10,6 +12,7 @@
 #include "maze.h"
 
 #define PIN 26 // pin matrix initialization
+#define PIN2 12
 
 // Color definitions
 #define BLACK 0x0000
@@ -21,9 +24,44 @@
 #define YELLOW 0xFFE0
 #define WHITE 0xFFFF
 
+uint8_t broadcastAddress[] = {0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF}; // MAC address of the receiver
+
+typedef struct struct_message
+{
+  char a[32];
+  int erreur;
+  int timer;
+  int timer_value;
+  int module;
+  int difficulty;
+  int level[2];
+  int condo;
+  int num_serie;
+  bool init_condo;
+} struc_message;
+
 Bouton bt[4];                                              // buttons initialization
 Adafruit_NeoMatrix matrix = Adafruit_NeoMatrix(8, 8, PIN); // matrix initialization
+Adafruit_NeoPixel pixels = Adafruit_NeoPixel(256, PIN2, NEO_GRB + NEO_KHZ800);
 uint16_t grey = matrix.Color(40, 40, 40);                  // initialization of a "new" color
+struct_message myData;
+
+esp_now_peer_info_t peerInfo; // peer info initialization
+
+void OnDataSent(const uint8_t *mac_addr, esp_now_send_status_t status) // function to check if the message has been sent
+{
+  Serial.print("\r\nLast Packet Send Status:\t");
+  Serial.println(status == ESP_NOW_SEND_SUCCESS ? "Delivery Success" : "Delivery Fail");
+}
+
+void OnDataRecv(const uint8_t *mac_addr, const uint8_t *data, int data_len) // function to check if the message has been received
+{
+  memcpy(&myData, data, sizeof(myData));
+}
+
+const int FDC = 18;
+const int Valcondo = 14;
+const int charge = 26;
 
 // initialization game settings
 int i = 0, j = 0;
@@ -38,12 +76,13 @@ int button_table[4] = {bt_blue, bt_yellow, bt_green, bt_black};               //
 void setup_bt(int nb_bt);                                                     // initialization of the buttons
 void read_bt(int nb_bt);                                                      // reading of the buttons
 
+int valeur_condo = 0;
 
 Maze maze_game;
 
 void setup()
 {
-  Serial.begin(9600);
+  Serial.begin(115200);
   // matrix initialization
   matrix.clear();
   matrix.begin();
@@ -53,12 +92,15 @@ void setup()
   pinMode(bt_green, INPUT);
   pinMode(bt_black, INPUT);
   pinMode(bt_blue, INPUT);
+  pinMode(FDC, INPUT);
+  pinMode(Valcondo, INPUT);
 
   // turn off the devil led
   pinMode(5, OUTPUT);
   pinMode(15, OUTPUT);
   pinMode(14, OUTPUT);
-
+  pinMode(charge, OUTPUT);
+   
   // fill the matrix full grey
   setup_bt(4);
   for (i = 0; i <= 7; i++)
@@ -238,6 +280,16 @@ void loop()
   {
     matrix.drawPixel(x, y, BLUE);
   }
+
+  int valeur = analogRead(valeur_condo);
+  for(int i = 0; i < map(valeur, 0, 1023, 0, 256); i++){
+      pixels.setPixelColor(i, pixels.Color(map(valeur, 0, 1023, 255, 0), 0, map(valeur, 0, 1023, 0, 255)));
+    }
+  if (digitalRead(FDC) == HIGH){
+    digitalWrite(charge, HIGH);
+  }else{
+    digitalWrite(charge, LOW);
+  }
 }
 
 void setup_bt(int nb_bt)
@@ -245,7 +297,7 @@ void setup_bt(int nb_bt)
   /*
     Input : nb_bt : number of buttons (int)
     Output : none
-    Description: This function is used to initialize the buttons
+    Description: This function is used to initialize the buttonsa
   */
   for (int k = 0; k < nb_bt; k++)
   {
